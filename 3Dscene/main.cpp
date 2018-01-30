@@ -50,7 +50,7 @@ int main( void )
     glBindVertexArray(VertexArrayID);
 
     // Create and compile our GLSL program from the shaders
-    GLuint programID = ShadersLoader::LoadShaders( "../ShadowMapping.vert", "../ShadowMapping.frag" );
+    GLuint programID = ShadersLoader::LoadShaders( "ShadowMapping.vert", "ShadowMapping.frag" );
     glUseProgram(programID);
     // Get a handle for our "MVP" uniform
     GLint MatrixID = glGetUniformLocation(programID, "MVP");
@@ -61,7 +61,7 @@ int main( void )
     GLint MatAmbientuseColorID = glGetUniformLocation(programID, "MaterialAmbientColor");
     GLint MatSpecularColorID = glGetUniformLocation(programID, "MaterialSpecularColor");
 
-    Scene scene("../scene.obj", MatrixID, ModelMatrixID, ViewMatrixID,
+    Scene scene("scene.obj", MatrixID, ModelMatrixID, ViewMatrixID,
                 MatDiffuseColorID, MatAmbientuseColorID, MatSpecularColorID);
 
     Light* staticLight = Light::getStatic();
@@ -70,7 +70,7 @@ int main( void )
     std::vector<Light*> lights{staticLight, movingLight};
 
     // Create and compile our GLSL program from the shaders
-    GLuint depthProgramID = ShadersLoader::LoadShaders( "../DepthRTT.vert", "../DepthRTT.frag" );
+    GLuint depthProgramID = ShadersLoader::LoadShaders( "DepthRTT.vert", "DepthRTT.frag" );
 
     for (auto light : lights)
     {
