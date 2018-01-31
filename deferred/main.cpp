@@ -87,8 +87,8 @@ int main()
     glGenVertexArrays(1, &VertexArrayID);
     glBindVertexArray(VertexArrayID);
 
-    GLuint geomProgramID = ShadersLoader::LoadShaders("../g_buffer.vert", "../g_buffer.frag");
-    GLuint lightProgramID = ShadersLoader::LoadShaders("../deferred_shading.vert", "../deferred_shading.frag");
+    GLuint geomProgramID = ShadersLoader::LoadShaders("g_buffer.vert", "g_buffer.frag");
+    GLuint lightProgramID = ShadersLoader::LoadShaders("deferred_shading.vert", "deferred_shading.frag");
 
     glUseProgram(geomProgramID);
 
@@ -96,10 +96,10 @@ int main()
     GLint SpecularColorID = glGetUniformLocation(geomProgramID, "specular");
     GLint AmbientColorID = glGetUniformLocation(geomProgramID, "ambient");
 
-//    Scene scene("../scene.obj");
+//    Scene scene("scene.obj");
     // load models
     // -----------
-    Scene scene("../scene.obj", DiffuseColorID, AmbientColorID, SpecularColorID);
+    Scene scene("scene.obj", DiffuseColorID, AmbientColorID, SpecularColorID);
     std::vector<glm::vec3> objectPositions;
     objectPositions.push_back(glm::vec3(0.0,  0.0, 0.0));
 
