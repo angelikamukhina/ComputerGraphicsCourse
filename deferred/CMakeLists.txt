@@ -37,6 +37,6 @@ add_subdirectory(./AntTweakBar)
 set_target_properties(AntTweakBar PROPERTIES LINKER_LANGUAGE CXX)
 include_directories(./AntTweakBar/TweakBar/include)
 
-ADD_EXECUTABLE (main main.cpp ShadersLoader.cpp ShadersLoader.h camera.h
-        Lights.h Scene.cpp Scene.h)
+ADD_EXECUTABLE (main main.cpp ShadersLoader.cpp ShadersLoader.h
+        Lights.h Scene.cpp Scene.h Window.cpp Window.h GeomPassHandler.cpp GeomPassHandler.h LightingPassHandler.cpp LightingPassHandler.h DebugDrawTexturesHandler.cpp DebugDrawTexturesHandler.h utils.h QuadDrawer.h QuadDrawer.cpp)
 target_link_libraries(main glfw ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${ASSIMP_LIBRARIES} AntTweakBar)
