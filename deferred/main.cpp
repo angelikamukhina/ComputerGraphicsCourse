@@ -14,13 +14,11 @@
 
 #include <iostream>
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+
+void mouseButtonCallback(GLFWwindow * window, int button, int action, int);
+void mousePosCallback(GLFWwindow * window, double xpos, double ypos);
 void processInput(GLFWwindow *window);
-unsigned int loadTexture(const char *path, bool gammaCorrection);
 void renderQuad();
-//void renderCube();
 
 // settings
 const unsigned int SCR_WIDTH = 1280;
@@ -35,12 +33,14 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-int lightsCount = 8;
+int lightsCount = 10;
 enum Mode {
     DEFERRED_LIGHTING, POSITION, NORMALS, DIFFUSE_COLOR, AMBIENT_COLOR, SPECULAR_COLOR
 };
 
 Mode mode = DEFERRED_LIGHTING;
+
+
 
 int main()
 {
@@ -62,11 +62,6 @@ int main()
         return -1;
     }
     glfwMakeContextCurrent(window);
-//    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-//    glfwSetScrollCallback(window, scroll_callback);
-
-//    // tell GLFW to capture our mouse
-//    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Initialize GLEW
     glewExperimental = true; // Needed for core profile
@@ -80,7 +75,7 @@ int main()
     TwInit(TW_OPENGL_CORE, NULL);
     TwWindowSize(SCR_WIDTH, SCR_HEIGHT);
     TwBar * GUI = TwNewBar("Settings");
-    TwAddVarRW(GUI, "lightsCount", TW_TYPE_UINT32, &lightsCount, "step=1");
+    TwAddVarRW(GUI, "Lights number", TW_TYPE_UINT32, &lightsCount, "step=1 min=0 max=30");
     TwEnumVal modes[] = {
             {Mode::DEFERRED_LIGHTING, "Deferred lighting"},
             {Mode::POSITION, "Position"},
@@ -94,11 +89,8 @@ int main()
 
 //    glfwSetMouseButtonCallback(window, (GLFWmousebuttonfun)TwEventMouseButtonGLFW); // - Directly redirect GLFW mouse button events to AntTweakBar
     // Set GLFW event callbacks. I removed glfwSetWindowSizeCallback for conciseness
-    glfwSetMouseButtonCallback(window, (GLFWmousebuttonfun)TwEventMouseButtonGLFW); // - Directly redirect GLFW mouse button events to AntTweakBar
-    glfwSetCursorPosCallback(window, (GLFWcursorposfun)TwEventMousePosGLFW);          // - Directly redirect GLFW mouse position events to AntTweakBar
-    glfwSetScrollCallback(window, (GLFWscrollfun)TwEventMouseWheelGLFW);    // - Directly redirect GLFW mouse wheel events to AntTweakBar
-    glfwSetKeyCallback(window, (GLFWkeyfun)TwEventKeyGLFW);                         // - Directly redirect GLFW key events to AntTweakBar
-    glfwSetCharCallback(window, (GLFWcharfun)TwEventCharGLFW);
+    glfwSetMouseButtonCallback(window, (GLFWmousebuttonfun) mouseButtonCallback); // - Directly redirect GLFW mouse button events to AntTweakBar
+    glfwSetCursorPosCallback(window, (GLFWcursorposfun) mousePosCallback);          // - Directly redirect GLFW mouse position events to AntTweakBar
 
     // configure global opengl state
     // -----------------------------
@@ -327,9 +319,29 @@ int main()
             GLint cameraPosID = glGetUniformLocation(lightProgramID, "viewPos");
             glUniform3f(cameraPosID, camera.Position.x, camera.Position.y, camera.Position.z);
 
+            GLint actLightNumber = glGetUniformLocation(lightProgramID, "NR_LIGHTS");
+            glUniform1i(actLightNumber, lightsCount);
+
             // send light relevant uniforms
-            for (unsigned int i = 0; i < lights.size(); i++)
+            for (unsigned int i = 0; i < lightsCount; i++)
             {
+//                GLint positionID = glGetUniformLocation(lightProgramID, "Position");
+//                glm::vec3 position = lights[i].getPos();
+//                glUniform3f(positionID, position.x, position.y, position.z);
+//                GLint colorID = glGetUniformLocation(lightProgramID, "Color");
+//                glm::vec3 color = lights[i].getColor();
+//                glUniform3f(colorID, color.r, color.g, color.b);
+//                lights[i].moveLight();
+//                const float linear = 0.8;
+//                const float quadratic = 8;
+//                GLint linearID = glGetUniformLocation(lightProgramID, "Linear");
+//                glUniform1f(linearID, linear);
+//                GLint quadraticID = glGetUniformLocation(lightProgramID, "Quadratic");
+//                glUniform1f(quadraticID, quadratic);
+//                renderQuad();
+
+
+
                 GLint positionID = glGetUniformLocation(lightProgramID, ("lights[" + std::to_string(i) + "].Position").c_str());
                 glm::vec3 position = lights[i].getPos();
                 glUniform3f(positionID, position.x, position.y, position.z);
@@ -345,7 +357,7 @@ int main()
                 glUniform1f(quadraticID, quadratic);
             }
             // finally render quad
-            renderQuad();
+
         }
 
         // 2.5. copy content of geometry's depth buffer to default framebuffer's depth buffer
@@ -416,38 +428,10 @@ void processInput(GLFWwindow *window)
         camera.ProcessKeyboard(RIGHT, deltaTime);
 }
 
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    // make sure the viewport matches the new window dimensions; note that width and
-    // height will be significantly larger than specified on retina displays.
-    glViewport(0, 0, width, height);
+void mouseButtonCallback(GLFWwindow * window, int button, int action, int) {
+    TwEventMouseButtonGLFW(button, action);
 }
 
-// glfw: whenever the mouse moves, this callback is called
-// -------------------------------------------------------
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
-{
-    if (firstMouse)
-    {
-        lastX = xpos;
-        lastY = ypos;
-        firstMouse = false;
-    }
-
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
-
-    lastX = xpos;
-    lastY = ypos;
-
-    camera.ProcessMouseMovement(xoffset, yoffset);
-}
-
-// glfw: whenever the mouse scroll wheel scrolls, this callback is called
-// ----------------------------------------------------------------------
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
-    camera.ProcessMouseScroll(yoffset);
+void mousePosCallback(GLFWwindow * window, double xpos, double ypos) {
+    TwEventMousePosGLFW(int(xpos), int(ypos));
 }
