@@ -1,5 +1,5 @@
 #version 330 core
-out vec4 FragColor;
+out vec3 FragColor;
 
 in vec2 TexCoords;
 
@@ -16,8 +16,9 @@ struct Light {
     float Linear;
     float Quadratic;
 };
-uniform int NR_LIGHTS;
+const int NR_LIGHTS = 32;
 uniform Light lights[NR_LIGHTS];
+uniform int actLightNumber;
 uniform vec3 viewPos;
 
 void main()
@@ -32,7 +33,7 @@ void main()
     // then calculate lighting as usual
     vec3 lighting  = Ambient;
     vec3 viewDir  = normalize(viewPos - FragPos);
-    for(int i = 0; i < NR_LIGHTS; ++i)
+    for(int i = 0; i < actLightNumber; ++i)
     {
         // diffuse
         vec3 lightDir = normalize(lights[i].Position - FragPos);
@@ -48,7 +49,9 @@ void main()
         specular *= attenuation;
         lighting += diffuse + specular;
     }
-    FragColor = vec4(lighting, 1.0);
+    float gamma = 2.2;
+    vec4 color = vec4(lighting, 1.0);
+    FragColor.rgb = pow(color.rgb, vec3(1.0/gamma));
 }
 
 

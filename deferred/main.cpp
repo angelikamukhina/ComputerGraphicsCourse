@@ -12,9 +12,6 @@
 #include "Scene.h"
 #include "ShadersLoader.h"
 
-#include <iostream>
-
-
 void mouseButtonCallback(GLFWwindow * window, int button, int action, int);
 void mousePosCallback(GLFWwindow * window, double xpos, double ypos);
 void processInput(GLFWwindow *window);
@@ -25,15 +22,12 @@ const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 720;
 // camera
 Camera camera(glm::vec3(0.0f, 5.0f, 5.0f));
-float lastX = (float)SCR_WIDTH / 2.0;
-float lastY = (float)SCR_HEIGHT / 2.0;
-bool firstMouse = true;
 
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-int lightsCount = 10;
+int lightsCount = 32;
 enum Mode {
     DEFERRED_LIGHTING, POSITION, NORMALS, DIFFUSE_COLOR, AMBIENT_COLOR, SPECULAR_COLOR
 };
@@ -44,16 +38,11 @@ Mode mode = DEFERRED_LIGHTING;
 
 int main()
 {
-    // glfw: initialize and configure
-    // ------------------------------
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-
-    // glfw window creation
-    // --------------------
     GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Deferred lighting", NULL, NULL);
     if (window == NULL)
     {
@@ -75,7 +64,7 @@ int main()
     TwInit(TW_OPENGL_CORE, NULL);
     TwWindowSize(SCR_WIDTH, SCR_HEIGHT);
     TwBar * GUI = TwNewBar("Settings");
-    TwAddVarRW(GUI, "Lights number", TW_TYPE_UINT32, &lightsCount, "step=1 min=0 max=30");
+    TwAddVarRW(GUI, "Lights number", TW_TYPE_UINT32, &lightsCount, "step=1 min=0 max=32");
     TwEnumVal modes[] = {
             {Mode::DEFERRED_LIGHTING, "Deferred lighting"},
             {Mode::POSITION, "Position"},
@@ -87,29 +76,16 @@ int main()
     TwType modeType = TwDefineEnum("ModeType", modes, 6);
     TwAddVarRW(GUI, "Mode", modeType, &mode, NULL);
 
-//    glfwSetMouseButtonCallback(window, (GLFWmousebuttonfun)TwEventMouseButtonGLFW); // - Directly redirect GLFW mouse button events to AntTweakBar
-    // Set GLFW event callbacks. I removed glfwSetWindowSizeCallback for conciseness
-    glfwSetMouseButtonCallback(window, (GLFWmousebuttonfun) mouseButtonCallback); // - Directly redirect GLFW mouse button events to AntTweakBar
-    glfwSetCursorPosCallback(window, (GLFWcursorposfun) mousePosCallback);          // - Directly redirect GLFW mouse position events to AntTweakBar
+    glfwSetMouseButtonCallback(window, (GLFWmousebuttonfun) mouseButtonCallback);
+    glfwSetCursorPosCallback(window, (GLFWcursorposfun) mousePosCallback);
 
-    // configure global opengl state
-    // -----------------------------
     glEnable(GL_DEPTH_TEST);
-
-    // Accept fragment if it closer to the camera than the former one
     glDepthFunc(GL_LESS);
-
-    // Cull triangles which normal is not towards the camera
     glEnable(GL_CULL_FACE);
-    // build and compile shaders
-    // -------------------------
-    GLuint VertexArrayID;
-    glGenVertexArrays(1, &VertexArrayID);
-    glBindVertexArray(VertexArrayID);
 
-    GLuint geomProgramID = ShadersLoader::LoadShaders("g_buffer.vert", "g_buffer.frag");
-    GLuint lightProgramID = ShadersLoader::LoadShaders("deferred_shading.vert", "deferred_shading.frag");
-    GLuint debugProramID = ShadersLoader::LoadShaders("fbo_debug.vert", "fbo_debug.frag");
+    GLuint geomProgramID = ShadersLoader::LoadShaders("../g_buffer.vert", "../g_buffer.frag");
+    GLuint lightProgramID = ShadersLoader::LoadShaders("../deferred_shading.vert", "../deferred_shading.frag");
+    GLuint debugProramID = ShadersLoader::LoadShaders("../fbo_debug.vert", "../fbo_debug.frag");
 
     glUseProgram(geomProgramID);
 
@@ -117,14 +93,12 @@ int main()
     GLint SpecularColorID = glGetUniformLocation(geomProgramID, "specular");
     GLint AmbientColorID = glGetUniformLocation(geomProgramID, "ambient");
 
-//    Scene scene("scene.obj");
-    // load models
-    // -----------
-    Scene scene("scene.obj", DiffuseColorID, AmbientColorID, SpecularColorID);
+    Scene scene("../scene.obj", DiffuseColorID, AmbientColorID, SpecularColorID);
 
+    GLuint VertexArrayID;
+    glGenVertexArrays(1, &VertexArrayID);
+    glBindVertexArray(VertexArrayID);
 
-    // configure g-buffer framebuffer
-    // ------------------------------
     unsigned int gBuffer;
     glGenFramebuffers(1, &gBuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
@@ -169,36 +143,30 @@ int main()
     unsigned int attachments[5] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2,
                                     GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4};
     glDrawBuffers(5, attachments);
-    // create and attach depth buffer (renderbuffer)
     unsigned int rboDepth;
     glGenRenderbuffers(1, &rboDepth);
     glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
-    // finally check if framebuffer is complete
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "Framebuffer not complete!" << std::endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    // lighting info
-    // -------------
     std::vector<Light> lights;
     srand(13);
     for (unsigned int i = 0; i < lightsCount; i++)
     {
         // calculate slightly random offsets
         float xPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
-        float yPos = 0.1;
+        float yPos = 0.0;
         float zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
         // also calculate random color
-        float rColor = (float)rand() / RAND_MAX; // between 0.5 and 1.0
-        float gColor = (float)rand() / RAND_MAX; // between 0.5 and 1.0
-        float bColor = (float)rand() / RAND_MAX; // between 0.5 and 1.0
+        float rColor = (float)rand() / RAND_MAX; // between 0.0 and 1.0
+        float gColor = (float)rand() / RAND_MAX; // between 0.0 and 1.0
+        float bColor = (float)rand() / RAND_MAX; // between 0.0 and 1.0
         lights.push_back(Light(glm::vec3(xPos, yPos, zPos), glm::vec3(rColor, gColor, bColor)));
     }
 
-    // shader configuration
-    // --------------------
     glUseProgram(lightProgramID);
     glUniform1i(glGetUniformLocation(lightProgramID, "gPosition"), 0);
     glUniform1i(glGetUniformLocation(lightProgramID, "gNormal"), 1);
@@ -206,26 +174,16 @@ int main()
     glUniform1i(glGetUniformLocation(lightProgramID, "gSpecularColor"), 3);
     glUniform1i(glGetUniformLocation(lightProgramID, "gAmbientColor"), 4);
 
-    // render loop
-    // -----------
     while (!glfwWindowShouldClose(window))
     {
-        // per-frame time logic
-        // --------------------
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-
-        // input
-        // -----
         processInput(window);
-
-        // render
-        // ------
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // 1. geometry pass: render scene's geometry/color data into gbuffer
+        // geometry pass
         // -----------------------------------------------------------------
         glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
         glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
@@ -247,7 +205,7 @@ int main()
                 GL_FLOAT,           // type
                 GL_FALSE,           // normalized?
                 0,                  // stride
-                (void*)0            // array buffer offset
+                (void*) nullptr     // array buffer offset
         );
 
         // 2nd attribute buffer : normals
@@ -259,7 +217,7 @@ int main()
                 GL_FLOAT,                         // type
                 GL_FALSE,                         // normalized?
                 0,                                // stride
-                (void*)0                          // array buffer offset
+                (void*) nullptr                   // array buffer offset
         );
 
         glUniformMatrix4fv(glGetUniformLocation(geomProgramID, "projection"), 1, GL_FALSE, &projection[0][0]);
@@ -273,7 +231,7 @@ int main()
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        // 2. lighting pass: calculate lighting by iterating over a screen filled quad pixel-by-pixel using the gbuffer's content.
+        // lighting pass
         // -----------------------------------------------------------------------------------------------------------------------
         glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -319,29 +277,11 @@ int main()
             GLint cameraPosID = glGetUniformLocation(lightProgramID, "viewPos");
             glUniform3f(cameraPosID, camera.Position.x, camera.Position.y, camera.Position.z);
 
-            GLint actLightNumber = glGetUniformLocation(lightProgramID, "NR_LIGHTS");
+            GLint actLightNumber = glGetUniformLocation(lightProgramID, "actLightNumber");
             glUniform1i(actLightNumber, lightsCount);
 
-            // send light relevant uniforms
             for (unsigned int i = 0; i < lightsCount; i++)
             {
-//                GLint positionID = glGetUniformLocation(lightProgramID, "Position");
-//                glm::vec3 position = lights[i].getPos();
-//                glUniform3f(positionID, position.x, position.y, position.z);
-//                GLint colorID = glGetUniformLocation(lightProgramID, "Color");
-//                glm::vec3 color = lights[i].getColor();
-//                glUniform3f(colorID, color.r, color.g, color.b);
-//                lights[i].moveLight();
-//                const float linear = 0.8;
-//                const float quadratic = 8;
-//                GLint linearID = glGetUniformLocation(lightProgramID, "Linear");
-//                glUniform1f(linearID, linear);
-//                GLint quadraticID = glGetUniformLocation(lightProgramID, "Quadratic");
-//                glUniform1f(quadraticID, quadratic);
-//                renderQuad();
-
-
-
                 GLint positionID = glGetUniformLocation(lightProgramID, ("lights[" + std::to_string(i) + "].Position").c_str());
                 glm::vec3 position = lights[i].getPos();
                 glUniform3f(positionID, position.x, position.y, position.z);
@@ -356,14 +296,11 @@ int main()
                 GLint quadraticID = glGetUniformLocation(lightProgramID, ("lights[" + std::to_string(i) + "].Quadratic").c_str());
                 glUniform1f(quadraticID, quadratic);
             }
-            // finally render quad
-
+            renderQuad();
         }
 
-        // 2.5. copy content of geometry's depth buffer to default framebuffer's depth buffer
-        // ----------------------------------------------------------------------------------
         glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer);
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -417,7 +354,6 @@ void processInput(GLFWwindow *window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.ProcessKeyboard(FORWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
