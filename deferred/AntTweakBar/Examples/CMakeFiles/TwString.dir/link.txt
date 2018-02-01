@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/TwString.dir/TwString.cpp.o  -o TwString -Wl,-rpath,/usr/local/lib ../TweakBar/libAntTweakBar.a /usr/local/lib/libglut.so -lXmu -lXi /usr/local/lib/libglut.so -lXmu -lXi ../Renderer/libATBGuiRenderer.a -lGLU -lGL -lSM -lICE -lX11 -lXext 

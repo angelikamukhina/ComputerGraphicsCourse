@@ -32,6 +32,11 @@ link_directories(${assimp_LIBRARY_DIRS})
 add_definitions(${assimp_DEFINITIONS})
 add_definitions(-std=c++11
         -DGLEW_STATIC)
+
+add_subdirectory(./AntTweakBar)
+set_target_properties(AntTweakBar PROPERTIES LINKER_LANGUAGE CXX)
+include_directories(./AntTweakBar/TweakBar/include)
+
 ADD_EXECUTABLE (main main.cpp ShadersLoader.cpp ShadersLoader.h camera.h
         Lights.h Scene.cpp Scene.h)
-target_link_libraries(main glfw ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${ASSIMP_LIBRARIES} )
+target_link_libraries(main glfw ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${ASSIMP_LIBRARIES} AntTweakBar)

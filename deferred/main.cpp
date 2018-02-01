@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
+#include "AntTweakBar.h"
 
 #include <iostream>
 #include "camera.h"
@@ -25,9 +25,8 @@ void renderQuad();
 // settings
 const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 720;
-
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 5.0f));
+Camera camera(glm::vec3(0.0f, 5.0f, 5.0f));
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -35,6 +34,13 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+int lightsCount = 8;
+enum Mode {
+    DEFERRED_LIGHTING, POSITION, NORMALS, DIFFUSE_COLOR, AMBIENT_COLOR, SPECULAR_COLOR
+};
+
+Mode mode = DEFERRED_LIGHTING;
 
 int main()
 {
@@ -48,7 +54,7 @@ int main()
 
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Deferred lighting", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -56,12 +62,11 @@ int main()
         return -1;
     }
     glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
+//    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+//    glfwSetScrollCallback(window, scroll_callback);
 
-    // tell GLFW to capture our mouse
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+//    // tell GLFW to capture our mouse
+//    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Initialize GLEW
     glewExperimental = true; // Needed for core profile
@@ -71,6 +76,29 @@ int main()
         glfwTerminate();
         return -1;
     }
+
+    TwInit(TW_OPENGL_CORE, NULL);
+    TwWindowSize(SCR_WIDTH, SCR_HEIGHT);
+    TwBar * GUI = TwNewBar("Settings");
+    TwAddVarRW(GUI, "lightsCount", TW_TYPE_UINT32, &lightsCount, "step=1");
+    TwEnumVal modes[] = {
+            {Mode::DEFERRED_LIGHTING, "Deferred lighting"},
+            {Mode::POSITION, "Position"},
+            {Mode::NORMALS, "Normals"},
+            {Mode::DIFFUSE_COLOR, "Diffuse color"},
+            {Mode::AMBIENT_COLOR, "Ambient color"},
+            {Mode::SPECULAR_COLOR, "Specular color"},
+    };
+    TwType modeType = TwDefineEnum("ModeType", modes, 6);
+    TwAddVarRW(GUI, "Mode", modeType, &mode, NULL);
+
+//    glfwSetMouseButtonCallback(window, (GLFWmousebuttonfun)TwEventMouseButtonGLFW); // - Directly redirect GLFW mouse button events to AntTweakBar
+    // Set GLFW event callbacks. I removed glfwSetWindowSizeCallback for conciseness
+    glfwSetMouseButtonCallback(window, (GLFWmousebuttonfun)TwEventMouseButtonGLFW); // - Directly redirect GLFW mouse button events to AntTweakBar
+    glfwSetCursorPosCallback(window, (GLFWcursorposfun)TwEventMousePosGLFW);          // - Directly redirect GLFW mouse position events to AntTweakBar
+    glfwSetScrollCallback(window, (GLFWscrollfun)TwEventMouseWheelGLFW);    // - Directly redirect GLFW mouse wheel events to AntTweakBar
+    glfwSetKeyCallback(window, (GLFWkeyfun)TwEventKeyGLFW);                         // - Directly redirect GLFW key events to AntTweakBar
+    glfwSetCharCallback(window, (GLFWcharfun)TwEventCharGLFW);
 
     // configure global opengl state
     // -----------------------------
@@ -89,6 +117,7 @@ int main()
 
     GLuint geomProgramID = ShadersLoader::LoadShaders("g_buffer.vert", "g_buffer.frag");
     GLuint lightProgramID = ShadersLoader::LoadShaders("deferred_shading.vert", "deferred_shading.frag");
+    GLuint debugProramID = ShadersLoader::LoadShaders("fbo_debug.vert", "fbo_debug.frag");
 
     glUseProgram(geomProgramID);
 
@@ -100,8 +129,6 @@ int main()
     // load models
     // -----------
     Scene scene("scene.obj", DiffuseColorID, AmbientColorID, SpecularColorID);
-    std::vector<glm::vec3> objectPositions;
-    objectPositions.push_back(glm::vec3(0.0,  0.0, 0.0));
 
 
     // configure g-buffer framebuffer
@@ -163,19 +190,18 @@ int main()
 
     // lighting info
     // -------------
-    const unsigned int NR_LIGHTS = 100;
     std::vector<Light> lights;
     srand(13);
-    for (unsigned int i = 0; i < NR_LIGHTS; i++)
+    for (unsigned int i = 0; i < lightsCount; i++)
     {
         // calculate slightly random offsets
         float xPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
-        float yPos = 2.0;
+        float yPos = 0.1;
         float zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
         // also calculate random color
-        float rColor = ((rand() % 100) / 200.0f) + 0.5; // between 0.5 and 1.0
-        float gColor = ((rand() % 100) / 200.0f) + 0.5; // between 0.5 and 1.0
-        float bColor = ((rand() % 100) / 200.0f) + 0.5; // between 0.5 and 1.0
+        float rColor = (float)rand() / RAND_MAX; // between 0.5 and 1.0
+        float gColor = (float)rand() / RAND_MAX; // between 0.5 and 1.0
+        float bColor = (float)rand() / RAND_MAX; // between 0.5 and 1.0
         lights.push_back(Light(glm::vec3(xPos, yPos, zPos), glm::vec3(rColor, gColor, bColor)));
     }
 
@@ -248,10 +274,7 @@ int main()
         glUniformMatrix4fv(glGetUniformLocation(geomProgramID, "view"), 1, GL_FALSE, &view[0][0]);
         glUniformMatrix4fv(glGetUniformLocation(geomProgramID, "model"), 1, GL_FALSE, &model[0][0]);
 
-        for (unsigned int i = 0; i < objectPositions.size(); i++)
-        {
-            scene.drawScene();
-        }
+        scene.drawScene();
 
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
@@ -264,40 +287,66 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glDisable(GL_DEPTH_TEST);
 
-        glUseProgram(lightProgramID);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, gPosition);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, gNormal);
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, gDiffuseColor);
-        glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D, gSpecularColor);
-        glActiveTexture(GL_TEXTURE4);
-        glBindTexture(GL_TEXTURE_2D, gAmbientColor);
+        if (mode != DEFERRED_LIGHTING) {
 
-        GLint cameraPosID = glGetUniformLocation(lightProgramID, "viewPos");
-        glUniform3f(cameraPosID, camera.Position.x, camera.Position.y, camera.Position.z);
-
-        // send light relevant uniforms
-        for (unsigned int i = 0; i < lights.size(); i++)
-        {
-            GLint positionID = glGetUniformLocation(lightProgramID, ("lights[" + std::to_string(i) + "].Position").c_str());
-            glm::vec3 position = lights[i].getPos();
-            glUniform3f(positionID, position.x, position.y, position.z);
-            GLint colorID = glGetUniformLocation(lightProgramID, ("lights[" + std::to_string(i) + "].Color").c_str());
-            glm::vec3 color = lights[i].getColor();
-            glUniform3f(colorID, color.r, color.g, color.b);
-            lights[i].moveLight();
-            const float linear = 1.8;
-            const float quadratic = 0.8;
-            GLint linearID = glGetUniformLocation(lightProgramID, ("lights[" + std::to_string(i) + "].Linear").c_str());
-            glUniform1f(linearID, linear);
-            GLint quadraticID = glGetUniformLocation(lightProgramID, ("lights[" + std::to_string(i) + "].Quadratic").c_str());
-            glUniform1f(quadraticID, quadratic);
+            glUseProgram(debugProramID);
+            glActiveTexture(GL_TEXTURE0);
+            unsigned int texture;
+            switch (mode)
+            {
+                case POSITION: texture = gPosition;
+                    break;
+                case NORMALS: texture = gNormal;
+                    break;
+                case DIFFUSE_COLOR: texture = gDiffuseColor;
+                    break;
+                case AMBIENT_COLOR: texture = gAmbientColor;
+                    break;
+                case SPECULAR_COLOR: texture = gSpecularColor;
+                    break;
+            }
+            glBindTexture(GL_TEXTURE_2D, texture);
+            GLint textureID = glGetUniformLocation(debugProramID, "fboAttachment");
+            glUniform1i(textureID, 0);
+            renderQuad();
         }
-        // finally render quad
-        renderQuad();
+        else
+        {
+            glUseProgram(lightProgramID);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, gPosition);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, gNormal);
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D, gDiffuseColor);
+            glActiveTexture(GL_TEXTURE3);
+            glBindTexture(GL_TEXTURE_2D, gSpecularColor);
+            glActiveTexture(GL_TEXTURE4);
+            glBindTexture(GL_TEXTURE_2D, gAmbientColor);
+
+            GLint cameraPosID = glGetUniformLocation(lightProgramID, "viewPos");
+            glUniform3f(cameraPosID, camera.Position.x, camera.Position.y, camera.Position.z);
+
+            // send light relevant uniforms
+            for (unsigned int i = 0; i < lights.size(); i++)
+            {
+                GLint positionID = glGetUniformLocation(lightProgramID, ("lights[" + std::to_string(i) + "].Position").c_str());
+                glm::vec3 position = lights[i].getPos();
+                glUniform3f(positionID, position.x, position.y, position.z);
+                GLint colorID = glGetUniformLocation(lightProgramID, ("lights[" + std::to_string(i) + "].Color").c_str());
+                glm::vec3 color = lights[i].getColor();
+                glUniform3f(colorID, color.r, color.g, color.b);
+                lights[i].moveLight();
+                const float linear = 0.8;
+                const float quadratic = 8;
+                GLint linearID = glGetUniformLocation(lightProgramID, ("lights[" + std::to_string(i) + "].Linear").c_str());
+                glUniform1f(linearID, linear);
+                GLint quadraticID = glGetUniformLocation(lightProgramID, ("lights[" + std::to_string(i) + "].Quadratic").c_str());
+                glUniform1f(quadraticID, quadratic);
+            }
+            // finally render quad
+            renderQuad();
+        }
 
         // 2.5. copy content of geometry's depth buffer to default framebuffer's depth buffer
         // ----------------------------------------------------------------------------------
@@ -306,10 +355,13 @@ int main()
         glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+        // Draw GUI
+        TwDraw();
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
+    TwTerminate();
     glfwTerminate();
     return 0;
 }
@@ -327,20 +379,24 @@ void renderQuad()
                 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
                 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
         };
-        // setup plane VAO
-        glGenVertexArrays(1, &quadVAO);
         glGenBuffers(1, &quadVBO);
-        glBindVertexArray(quadVAO);
         glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+
+        // setup plane VAO
+        glGenVertexArrays(1, &quadVAO);
+        glBindVertexArray(quadVAO);
     }
-    glBindVertexArray(quadVAO);
+
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glBindVertexArray(0);
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
