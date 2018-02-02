@@ -66,7 +66,7 @@ int main()
         glDisable(GL_DEPTH_TEST);
 
         if (utils::mode != utils::DEFERRED_LIGHTING) {
-
+            debug.debugDraw();
         }
         else
         {
