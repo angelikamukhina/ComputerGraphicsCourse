@@ -11,28 +11,23 @@ public:
                     const char * fragment_file_path,
                     const char * scene_obj_file);
     void geomPass();
-    unsigned int getPositionTexture()
-    {
+    unsigned int getPositionTexture() {
         return gPosition;
     }
 
-    unsigned int getNormalTexture()
-    {
+    unsigned int getNormalTexture() {
         return gNormal;
     }
 
-    unsigned int getDiffuseColorTexture()
-    {
+    unsigned int getDiffuseColorTexture() {
         return gDiffuseColor;
     }
 
-    unsigned int getSpecularColorTexture()
-    {
+    unsigned int getSpecularColorTexture() {
         return gSpecularColor;
     }
 
-    unsigned int getAmbientColorTexture()
-    {
+    unsigned int getAmbientColorTexture() {
         return gAmbientColor;
     }
 

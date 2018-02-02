@@ -10,11 +10,11 @@ class LightingPassHandler {
 public:
     LightingPassHandler(const char * vertex_file_path,
                         const char * fragment_file_path,
-                        GeomPassHandler * geomPassHandler);
+                        GeomPassHandler * geomPassHandler,
+                        int maxLightsNumber);
     void lightingPass();
-    int lightsCount = 32;
-    ~LightingPassHandler()
-    {
+    int lightsCount = 10;
+    ~LightingPassHandler() {
         glDeleteProgram(programID);
     }
 private:

@@ -7,9 +7,9 @@
 std::vector<Light> getLights(int lightsNumber);
 
 LightingPassHandler::LightingPassHandler(const char *vertex_file_path, const char *fragment_file_path,
-                                        GeomPassHandler * geomPassHandler) {
+                                        GeomPassHandler * geomPassHandler, int maxLightsNumber) {
     programID = ShadersLoader::LoadShaders(vertex_file_path, fragment_file_path);
-    lights = getLights(lightsCount);
+    lights = getLights(maxLightsNumber);
     this->geomPassHandler = geomPassHandler;
     glUseProgram(programID);
     glUniform1i(glGetUniformLocation(programID, "gPosition"), 0);
@@ -17,7 +17,6 @@ LightingPassHandler::LightingPassHandler(const char *vertex_file_path, const cha
     glUniform1i(glGetUniformLocation(programID, "gDiffuseColor"), 2);
     glUniform1i(glGetUniformLocation(programID, "gSpecularColor"), 3);
     glUniform1i(glGetUniformLocation(programID, "gAmbientColor"), 4);
-
 }
 
 void LightingPassHandler::lightingPass() {
@@ -61,8 +60,7 @@ void LightingPassHandler::lightingPass() {
 std::vector<Light> getLights(int lightsNumber) {
     std::vector<Light> lights;
     srand(13);
-    for (unsigned int i = 0; i < lightsNumber; i++)
-    {
+    for (unsigned int i = 0; i < lightsNumber; i++) {
         // calculate slightly random offsets
         float xPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
         float yPos = 0.0;

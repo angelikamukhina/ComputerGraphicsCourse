@@ -7,16 +7,13 @@
 class Light {
 public:
     Light(glm::vec3 position, glm::vec3 color) : lightPos(position), lightColor(color) {}
-    glm::vec3 getPos()
-    {
+    glm::vec3 getPos() {
         return lightPos;
     }
-    glm::vec3 getColor()
-    {
+    glm::vec3 getColor() {
         return lightColor;
     }
-    void moveLight()
-    {
+    void moveLight() {
         lightPos = glm::rotateY(lightPos, 0.01f);
     }
 private:

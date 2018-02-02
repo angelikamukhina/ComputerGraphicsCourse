@@ -12,6 +12,8 @@
 #include "LightingPassHandler.h"
 #include "DebugDrawTexturesHandler.h"
 
+const int MAX_LIGHTS_NUMBER = 32;
+
 
 int main()
 {
@@ -21,17 +23,18 @@ int main()
     glDepthFunc(GL_LESS);
     glEnable(GL_CULL_FACE);
 
-    auto * geomPassHandler = new GeomPassHandler("g_buffer.vert", "g_buffer.frag",
-                                    "scene.obj");
+    auto * geomPassHandler = new GeomPassHandler("../g_buffer.vert", "../g_buffer.frag",
+                                    "../scene.obj");
 
-    LightingPassHandler lightPassHandler("deferred_shading.vert", "deferred_shading.frag",
-                                         geomPassHandler);
-    DebugDrawTexturesHandler debug("fbo_debug.vert", "fbo_debug.frag", geomPassHandler);
+    LightingPassHandler lightPassHandler("../deferred_shading.vert", "../deferred_shading.frag",
+                                         geomPassHandler, MAX_LIGHTS_NUMBER);
+    DebugDrawTexturesHandler debug("../fbo_debug.vert", "../fbo_debug.frag", geomPassHandler);
 
     TwInit(TW_OPENGL_CORE, NULL);
     TwWindowSize(utils::SCR_WIDTH, utils::SCR_HEIGHT);
     TwBar * GUI = TwNewBar("Settings");
-    TwAddVarRW(GUI, "Lights number", TW_TYPE_UINT32, &lightPassHandler.lightsCount, "step=1 min=0 max=32");
+    TwAddVarRW(GUI, "Lights number", TW_TYPE_UINT32, &lightPassHandler.lightsCount,
+               ("step=1 min=0 max=" + std::to_string(MAX_LIGHTS_NUMBER)).c_str());
     TwEnumVal modes[] = {
             {utils::Mode::DEFERRED_LIGHTING, "Deferred lighting"},
             {utils::Mode::POSITION, "Position"},
@@ -53,9 +56,7 @@ int main()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
-
-    while (window->shouldNotEndLoop())
-    {
+    while (window->shouldNotEndLoop()) {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -67,9 +68,7 @@ int main()
 
         if (utils::mode != utils::DEFERRED_LIGHTING) {
             debug.debugDraw();
-        }
-        else
-        {
+        } else {
             lightPassHandler.lightingPass();
         }
         TwDraw();
@@ -80,4 +79,3 @@ int main()
     glfwTerminate();
     return 0;
 }
-

@@ -7,8 +7,7 @@
 
 class Window {
 public:
-    static Window* getInstance()
-    {
+    static Window* getInstance() {
         if (!instance)
         {
             assert(0);
@@ -16,38 +15,32 @@ public:
         return instance;
     }
 
-    static Window* getInstance( int width, int height)
-    {
+    static Window* getInstance( int width, int height) {
         if(!instance)
         {
             instance = new Window(width, height);
         }
         return instance;
     }
-    int getWidth()
-    {
+    int getWidth() {
         return width;
     }
 
-    int getHeiht()
-    {
+    int getHeiht() {
         return height;
     }
 
-    bool shouldNotEndLoop()
-    {
+    bool shouldNotEndLoop() {
         return glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
                glfwWindowShouldClose(window) == 0;
     }
 
-    void endLoop()
-    {
+    void endLoop() {
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    ~Window()
-    {
+    ~Window() {
         delete instance;
     }
 private:

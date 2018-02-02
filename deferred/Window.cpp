@@ -15,8 +15,7 @@ void mousePosCallback(GLFWwindow * window, double x, double y) {
 
 Window::Window(int width, int height)
         : width(width),
-          height(height)
-{
+          height(height) {
     glfwInit();
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);

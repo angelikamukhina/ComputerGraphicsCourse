@@ -12,8 +12,7 @@ uniform vec3 diffuse;
 uniform vec3 specular;
 uniform vec3 ambient;
 
-void main()
-{    
+void main() {
     gPosition = FragPos;
     gNormal = normalize(Normal);
     gDiffuseColor = diffuse;

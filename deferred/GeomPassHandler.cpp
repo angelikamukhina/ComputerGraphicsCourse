@@ -5,8 +5,7 @@
 
 GeomPassHandler::GeomPassHandler(const char *vertex_file_path,
                                  const char *fragment_file_path,
-                                 const char * scene_obj_file)
-{
+                                 const char * scene_obj_file) {
     programID = ShadersLoader::LoadShaders(vertex_file_path, fragment_file_path);
     GLint DiffuseColorID = glGetUniformLocation(programID, "diffuse");
     GLint SpecularColorID = glGetUniformLocation(programID, "specular");
@@ -20,8 +19,7 @@ void GeomPassHandler::use() {
     glUseProgram(programID);
 }
 
-void GeomPassHandler::initializeGBuffer(int windowWidth, int windowHeight)
-{
+void GeomPassHandler::initializeGBuffer(int windowWidth, int windowHeight) {
     glGenVertexArrays(1, &VertexArrayID);
     glBindVertexArray(VertexArrayID);
 

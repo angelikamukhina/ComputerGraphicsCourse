@@ -18,8 +18,7 @@ public:
            GLint vertexOffset,
            glm::vec3 diffuseColor,
            glm::vec3 ambientColor,
-           glm::vec3 specularColor)
-    {
+           glm::vec3 specularColor) {
         this->diffuseColor = diffuseColor;
         this->ambientColor = ambientColor;
         this->specularColor = specularColor;
@@ -28,24 +27,20 @@ public:
         this->vertexOffset = vertexOffset;
     }
 
-    void draw()
-    {
+    void draw() {
         glDrawArrays(GL_TRIANGLES, vertexOffset,
                      static_cast<GLsizei>(vertices.size()));
     }
 
-    glm::vec3 getDiffuseColor()
-    {
+    glm::vec3 getDiffuseColor() {
         return diffuseColor;
     }
 
-    glm::vec3 getAmbientColor()
-    {
+    glm::vec3 getAmbientColor() {
         return ambientColor;
     }
 
-    glm::vec3 getSpecularColor()
-    {
+    glm::vec3 getSpecularColor() {
         return specularColor;
     }
 
@@ -62,10 +57,8 @@ class Scene {
 public:
     explicit Scene(const char * path, GLint MatDiffuseColorID, GLint MatAmbientuseColorID, GLint MatSpecularColorID);
 
-    void drawScene()
-    {
-        for (auto object : objects)
-        {
+    void drawScene() {
+        for (auto object : objects) {
             glm::vec3 diffuseColor = object->getDiffuseColor();
             glm::vec3 ambientColor = object->getAmbientColor();
             glm::vec3 specularColor = object->getSpecularColor();
@@ -77,23 +70,19 @@ public:
         }
     }
 
-    ~Scene()
-    {
-        for(Object* object : objects)
-        {
+    ~Scene() {
+        for(Object* object : objects) {
             delete object;
         }
         glDeleteBuffers(1, &vertexbuffer);
         glDeleteBuffers(1, &normalbuffer);
     }
 
-    GLuint getVertexbuffer()
-    {
+    GLuint getVertexbuffer() {
         return vertexbuffer;
     }
 
-    GLuint getNormalbuffer()
-    {
+    GLuint getNormalbuffer() {
         return normalbuffer;
     }
 
