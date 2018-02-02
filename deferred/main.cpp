@@ -23,12 +23,12 @@ int main()
     glDepthFunc(GL_LESS);
     glEnable(GL_CULL_FACE);
 
-    auto * geomPassHandler = new GeomPassHandler("g_buffer.vert", "g_buffer.frag",
-                                    "scene.obj");
+    auto * geomPassHandler = new GeomPassHandler("../g_buffer.vert", "../g_buffer.frag",
+                                    "../scene.obj");
 
-    LightingPassHandler lightPassHandler("deferred_shading.vert", "deferred_shading.frag",
+    LightingPassHandler lightPassHandler("../deferred_shading.vert", "../deferred_shading.frag",
                                          geomPassHandler, MAX_LIGHTS_NUMBER);
-    DebugDrawTexturesHandler debug("fbo_debug.vert", "fbo_debug.frag", geomPassHandler);
+    DebugDrawTexturesHandler debug("../fbo_debug.vert", "../fbo_debug.frag", geomPassHandler);
 
     TwInit(TW_OPENGL_CORE, NULL);
     TwWindowSize(utils::SCR_WIDTH, utils::SCR_HEIGHT);
@@ -67,7 +67,7 @@ int main()
         glDisable(GL_DEPTH_TEST);
 
         if (utils::mode != utils::DEFERRED_LIGHTING) {
-            debug.debugDraw();
+            debug.debugDraw(utils::mode);
         } else {
             lightPassHandler.lightingPass();
         }

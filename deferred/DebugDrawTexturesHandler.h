@@ -10,7 +10,7 @@ class DebugDrawTexturesHandler {
 public:
     DebugDrawTexturesHandler(const char * vert_file_path, const char * frag_file_path,
                             GeomPassHandler * geomPassHandler);
-    void debugDraw();
+    void debugDraw(utils::Mode mode);
     ~DebugDrawTexturesHandler() {
         glDeleteProgram(programID);
     }

@@ -7,11 +7,11 @@ DebugDrawTexturesHandler::DebugDrawTexturesHandler(const char *vert_file_path, c
     programID = ShadersLoader::LoadShaders(vert_file_path, frag_file_path);
 }
 
-void DebugDrawTexturesHandler::debugDraw() {
+void DebugDrawTexturesHandler::debugDraw(utils::Mode mode) {
     glUseProgram(programID);
     glActiveTexture(GL_TEXTURE0);
     unsigned int texture;
-    switch (utils::mode) {
+    switch (mode) {
         case utils::POSITION: texture = geomPassHandler->getPositionTexture();
             break;
         case utils::NORMALS: texture = geomPassHandler->getNormalTexture();
