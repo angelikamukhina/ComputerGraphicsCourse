@@ -8,7 +8,7 @@
 class LightDepthPassHandler {
 public:
     LightDepthPassHandler(const char * vert_file_path, const char * frag_file_path);
-    void getDepthTextures(std::vector<Light*> const & lights);
+    void setDepthTextures(std::vector<Light *> const &lights);
     void use() {
         glUseProgram(programID);
     }

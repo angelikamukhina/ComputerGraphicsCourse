@@ -5,7 +5,7 @@ LightDepthPassHandler::LightDepthPassHandler(const char * vert_file_path, const 
     programID = ShadersLoader::LoadShaders(vert_file_path, frag_file_path);
 }
 
-void LightDepthPassHandler::getDepthTextures(std::vector<Light *> const &lights) {
+void LightDepthPassHandler::setDepthTextures(std::vector<Light *> const &lights) {
     for (auto light : lights) {
         glUseProgram(programID);
         // Get a handle for our "MVP" uniform

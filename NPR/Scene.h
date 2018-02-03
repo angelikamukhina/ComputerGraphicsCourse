@@ -118,9 +118,7 @@ public:
 
     void drawScene(utils::Mode mode);
 
-    void drawShadows(Light* light)
-    {
-        // 1rst attribute buffer : vertices
+    void drawShadows(Light* light) {
         glEnableVertexAttribArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
         glVertexAttribPointer(

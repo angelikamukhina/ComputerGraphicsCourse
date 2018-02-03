@@ -46,32 +46,34 @@ int main()
     std::vector<Light*> lights{staticLight, movingLight};
 
     LightDepthPassHandler depthPassHandler("../DepthRTT.vert", "../DepthRTT.frag");
-    depthPassHandler.getDepthTextures(lights);
+    depthPassHandler.setDepthTextures(lights);
 
     do{
-        for (auto light : lights)
-        {
-            GLuint FramebufferName = light->getFramebuffer();
-            glBindFramebuffer(GL_FRAMEBUFFER, FramebufferName);
-            glViewport(0, 0, windowWidth, windowHeight);
-            glEnable(GL_CULL_FACE);
-            glCullFace(GL_BACK);
+        utils::Mode mode = utils::mode;
 
-            // Clear the screen
+        if (mode == utils::TOON_SHADING) {
+            for (auto light : lights) {
+                GLuint FramebufferName = light->getFramebuffer();
+                glBindFramebuffer(GL_FRAMEBUFFER, FramebufferName);
+                glViewport(0, 0, windowWidth, windowHeight);
+                glEnable(GL_CULL_FACE);
+                glCullFace(GL_BACK);
+
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                depthPassHandler.use();
+                scene.drawShadows(light);
+            }
+
+            // Render to the screen
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glViewport(0, 0, windowWidth, windowHeight);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            // Use our shader
-            depthPassHandler.use();
-            scene.drawShadows(light);
+            toonShadowsPassHandler->initializeShader(lights);
         }
 
-        // Render to the screen
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glViewport(0, 0, windowWidth, windowHeight);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        toonShadowsPassHandler->initializeShader(lights);
-        scene.drawScene(utils::mode);
+        scene.drawScene(mode);
 
         for (auto light : lights)
         {
