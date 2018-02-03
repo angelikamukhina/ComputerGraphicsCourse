@@ -37,15 +37,15 @@ int main()
     glDepthFunc(GL_LESS);
     glEnable(GL_CULL_FACE);
 
-    auto * toonShadowsPassHandler = new ToonShadowsPassHandler( "../ShadowMapping.vert", "../ShadowMapping.frag" );
-    Scene scene("../scene.obj", toonShadowsPassHandler);
+    auto * toonShadowsPassHandler = new ToonShadowsPassHandler( "ShadowMapping.vert", "ShadowMapping.frag" );
+    Scene scene("scene.obj", toonShadowsPassHandler);
 
     Light* staticLight = Light::getStatic();
     Light* movingLight = Light::getMoving();
 
     std::vector<Light*> lights{staticLight, movingLight};
 
-    LightDepthPassHandler depthPassHandler("../DepthRTT.vert", "../DepthRTT.frag");
+    LightDepthPassHandler depthPassHandler("DepthRTT.vert", "DepthRTT.frag");
     depthPassHandler.setDepthTextures(lights);
 
     do{
