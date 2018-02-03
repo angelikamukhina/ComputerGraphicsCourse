@@ -41,9 +41,8 @@ int main()
     Scene scene("scene.obj", toonShadowsPassHandler);
 
     Light* staticLight = Light::getStatic();
-    Light* movingLight = Light::getMoving();
 
-    std::vector<Light*> lights{staticLight, movingLight};
+    std::vector<Light*> lights{staticLight};
 
     LightDepthPassHandler depthPassHandler("DepthRTT.vert", "DepthRTT.frag");
     depthPassHandler.setDepthTextures(lights);

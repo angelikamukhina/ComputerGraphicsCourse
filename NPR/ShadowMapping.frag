@@ -27,7 +27,6 @@ void main(){
     vec3 diffuseMultiplier = vec3(0);
     vec3 specularMultiplier = vec3(0);
     vec3 LightColor = vec3(1);
-    float LightPower = 40.0f;
 
     for (int light = 0; light < lightsNumber; ++light) {
         vec3 LightPosition_worldspace = LightPositions[light];
@@ -37,8 +36,6 @@ void main(){
         vec3 LightPosition_cameraspace = ( V * vec4(LightPosition_worldspace, 1)).xyz;
         vec3 LightDir_cameraspace = LightPosition_cameraspace - vertexPosition_cameraspace;
 
-        float distance = length(LightDir_cameraspace);
-        distance = distance * distance;
         vec4 ShadowCoord = DepthBiasVP * vec4(Position_worldspace, 1);
         vec3 normLightDir_cameraspace = normalize(LightDir_cameraspace);
 
@@ -46,7 +43,7 @@ void main(){
 
          // variable bias
         float bias = 0.005 * tan(acos(lambertian));
-        float visibility = texture(shadowMaps[light], vec3(ShadowCoord.xy,  (ShadowCoord.z-bias)/ShadowCoord.w));
+        float visibility = texture(shadowMaps[light], vec3(ShadowCoord.xy,  ShadowCoord.z/ShadowCoord.w));
 
 //        const float A = 0.1;
 //        const float B = 0.3;
@@ -61,6 +58,9 @@ void main(){
         if (lambertian < A) lambertian = 0.0;
         else lambertian = B;
 
+        if (visibility < A) visibility = 0.0;
+        else visibility = B;
+
         float specular  = 0.0;
         if (lambertian > 0.0) {
             vec3 viewDir = normalize(-vertexPosition_cameraspace);
@@ -69,8 +69,11 @@ void main(){
             specular = pow(specAngle, shininess);
         }
 
-        diffuseMultiplier += visibility * lambertian * LightColor * LightPower / distance;
-        specularMultiplier += visibility * specular * LightColor * LightPower / distance;
+        if (specular < A) specular = 0.0;
+        else specular = B;
+
+        diffuseMultiplier += visibility * lambertian * LightColor;
+        specularMultiplier += visibility * specular * LightColor;
     }
 
 	color = min(MaterialAmbientColor +
