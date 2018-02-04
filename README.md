@@ -10,7 +10,7 @@ sudo apt-get install libassimp-dev
 ### Загрузка кода программы
 git clone https://github.com/angelikamukhina/ComputerGraphicsCourse.git
 
-cd NPR
+cd ComputerGraphicsCourse
 
 git fetch --all
 
