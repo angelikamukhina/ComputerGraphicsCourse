@@ -38,5 +38,8 @@ set_target_properties(AntTweakBar PROPERTIES LINKER_LANGUAGE CXX)
 include_directories(./AntTweakBar/TweakBar/include)
 
 ADD_EXECUTABLE (main main.cpp ShadersLoader.cpp ShadersLoader.h
-        Scene.cpp Scene.h Window.cpp Window.h Camera.h Lights.cpp Lights.h utils.h ToonShadowsPassHandler.cpp ToonShadowsPassHandler.h LightDepthPassHandler.cpp LightDepthPassHandler.h DepthPassHandler.cpp DepthPassHandler.h WireframePassHandler.cpp WireframePassHandler.h)
+        Scene.cpp Scene.h Window.cpp Window.h Camera.h Lights.cpp Lights.h utils.h
+        ToonShadowsPassHandler.cpp ToonShadowsPassHandler.h LightDepthPassHandler.cpp
+        LightDepthPassHandler.h WireframePassHandler.cpp WireframePassHandler.h
+        CombinePassHandler.cpp CombinePassHandler.h)
 target_link_libraries(main glfw ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${ASSIMP_LIBRARIES} AntTweakBar)

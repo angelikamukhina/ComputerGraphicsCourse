@@ -18,7 +18,7 @@ ToonShadowsPassHandler::ToonShadowsPassHandler(const char * vertFilePath, const 
     MatSpecularColorID = glGetUniformLocation(programID, "MaterialSpecularColor");
 }
 
-void ToonShadowsPassHandler::initializeShader(std::vector<Light*> const & lights) {
+void ToonShadowsPassHandler::initializeShader(Light *light) {
     // Use our shader
     use();
     Window * window = Window::getInstance();
@@ -28,24 +28,17 @@ void ToonShadowsPassHandler::initializeShader(std::vector<Light*> const & lights
                                                   0.1f, 100.0f);
     glm::mat4 ViewMatrix = window->camera->GetViewMatrix();
 
-    const GLenum depthTextures[] = {GL_TEXTURE0, GL_TEXTURE1};
-
-    for (size_t i = 0; i < lights.size(); ++i) {
-        glActiveTexture(depthTextures[i]);
-        auto light = lights[i];
-        glBindTexture(GL_TEXTURE_2D, light->getTexture());
-        std::string lightIdx = std::to_string(i);
-        const GLint positionID = glGetUniformLocation(programID, ("LightPositions[" + lightIdx + "]").c_str());
-        glm::vec3 lightPos = light->getPos();
-        glUniform3f(positionID, lightPos.x, lightPos.y, lightPos.z);
-        const GLint DepthBiasID = glGetUniformLocation(programID, ("DepthBiasVPs[" + lightIdx + "]").c_str());
-        glm::mat4 depthBiasMVP = light->getDepthBiasVP();
-        glUniformMatrix4fv(DepthBiasID, 1, GL_FALSE, &depthBiasMVP[0][0]);
-        const auto shadowMaps = "shadowMaps[" + lightIdx + "]";
-        const GLint ShadowMapID = glGetUniformLocation(programID, shadowMaps.c_str());
-        glUniform1i(ShadowMapID, static_cast<GLint>(i));
-        glUniformMatrix4fv(DepthBiasID, 1, GL_FALSE, &depthBiasMVP[0][0]);
-    }
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, light->getTexture());
+    const GLint positionID = glGetUniformLocation(programID, "LightPosition");
+    glm::vec3 lightPos = light->getPos();
+    glUniform3f(positionID, lightPos.x, lightPos.y, lightPos.z);
+    const GLint DepthBiasID = glGetUniformLocation(programID, "DepthBiasVP");
+    glm::mat4 depthBiasMVP = light->getDepthBiasVP();
+    glUniformMatrix4fv(DepthBiasID, 1, GL_FALSE, &depthBiasMVP[0][0]);
+    const GLint ShadowMapID = glGetUniformLocation(programID, "shadowMap");
+    glUniform1i(ShadowMapID, 0);
+    glUniformMatrix4fv(DepthBiasID, 1, GL_FALSE, &depthBiasMVP[0][0]);
 }
 
 

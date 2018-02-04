@@ -69,7 +69,7 @@ Window::Window(int width, int height)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Open a window and create its OpenGL context
-    window = glfwCreateWindow( width, height, "Deferred lighting", nullptr, nullptr);
+    window = glfwCreateWindow( width, height, "NPR", nullptr, nullptr);
     if( window == nullptr){
         std::cerr << "Unable to create glfw window" << std::endl;
         glfwTerminate();

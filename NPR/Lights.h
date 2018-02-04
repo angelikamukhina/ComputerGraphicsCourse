@@ -3,32 +3,26 @@
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <GLFW/glfw3.h>
-#include <glm/gtx/rotate_vector.hpp>
-#include <glm/gtx/euler_angles.hpp>
 
-
-class Light {
+class Light
+{
 public:
-    static Light* getStatic()
-    {
-        if(!staticLight)
-        {
+    static Light *getStatic() {
+        if (!staticLight) {
             staticLight = new Light(false);
         }
         return staticLight;
     }
-    static Light* getMoving()
-    {
-        if(!movingLight)
+
+    static Light *getMoving() {
+        if (!movingLight)
         {
             movingLight = new Light(true);
         }
         return movingLight;
     }
-    glm::mat4 getDepthBiasVP()
-    {
+
+    glm::mat4 getDepthBiasVP() {
         const glm::mat4 biasMatrix(
                 0.5, 0.0, 0.0, 0.0,
                 0.0, 0.5, 0.0, 0.0,
@@ -38,67 +32,45 @@ public:
         return biasMatrix * depthProjectionMatrix * depthViewMatrix;
     }
 
-    glm::mat4 getProjection()
-    {
+    glm::mat4 getProjection() {
         return depthProjectionMatrix;
     }
 
-    glm::mat4 getView()
-    {
+    glm::mat4 getView() {
         return depthViewMatrix;
     }
 
-    glm::vec3 getPos()
-    {
+    glm::vec3 getPos() {
         return lightPos;
     }
 
-    void setTexture(GLint texture)
-    {
+    void setTexture(GLint texture) {
         depthTexture = texture;
     }
 
-    void setMatrixID(GLint matrixID)
-    {
+    void setMatrixID(GLint matrixID) {
         depthMVPID = matrixID;
     }
 
-    void setFramebuffer(GLuint framebuffer)
-    {
+    void setFramebuffer(GLuint framebuffer) {
         this->framebuffer = framebuffer;
     }
 
-    GLint getTexture()
-    {
+    GLint getTexture() {
         return depthTexture;
     }
 
-    GLint getMatrixID()
-    {
+    GLint getMatrixID() {
         return depthMVPID;
     }
 
-    GLuint getFramebuffer()
-    {
+    GLuint getFramebuffer() {
         return framebuffer;
     }
 
-    void moveLight()
-    {
-        if (isRotated)
-        {
-            lightPos = glm::rotateY(lightPos, 0.01f);
-            depthProjectionMatrix = glm::ortho<float>(-10, 10, -10, 10, -10, 20);
-            depthViewMatrix = glm::lookAt(lightPos, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-        }
-    }
+    void moveLight();
 
-    ~Light()
-    {
-        glDeleteFramebuffers(1, &framebuffer);
-        delete movingLight;
-        delete staticLight;
-    }
+    ~Light();
 
 private:
     GLuint framebuffer;
@@ -109,15 +81,11 @@ private:
     glm::vec3 lightPos;
     glm::mat4 depthProjectionMatrix;
     glm::mat4 depthViewMatrix;
-    Light(bool isRotated)
-    {
-        this->isRotated = isRotated;
-        lightPos = glm::vec3(4, 4, 4);
-        depthProjectionMatrix = glm::ortho<float>(-10, 10, -10, 10, -10, 20);
-        depthViewMatrix = glm::lookAt(lightPos, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-    }
-    static Light* staticLight;
-    static Light* movingLight;
+
+    Light(bool isRotated);
+
+    static Light *staticLight;
+    static Light *movingLight;
 };
 
 

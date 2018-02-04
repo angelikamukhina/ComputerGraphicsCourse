@@ -7,6 +7,8 @@ namespace utils {
     };
 
     static Mode mode = TOON_SHADING;
+    
+    static bool pause = false;
 }
 
 #endif //NPR_UTILS_H

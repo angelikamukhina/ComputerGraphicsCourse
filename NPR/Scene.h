@@ -12,7 +12,6 @@
 #include "Lights.h"
 #include "Window.h"
 #include "utils.h"
-#include "ToonShadowsPassHandler.h"
 
 class Object
 {
@@ -37,26 +36,6 @@ public:
         return objectModelMatrix;
     }
 
-    void drawFill()
-    {
-        glDrawArrays(GL_TRIANGLES, vertexOffset,
-                     static_cast<GLsizei>(vertices.size()));
-        rotate();
-    }
-
-    void drawWireframe()
-    {
-        for(int i = 0; i < static_cast<GLsizei>(vertices.size()); i += 3)
-            glDrawArrays(GL_LINE_LOOP, vertexOffset + i, 3);
-        rotate();
-    }
-
-    void drawStatic()
-    {
-        glDrawArrays(GL_TRIANGLES, vertexOffset,
-                     static_cast<GLsizei>(vertices.size()));
-    }
-
     glm::vec3 getDiffuseColor()
     {
         return diffuseColor;
@@ -70,6 +49,45 @@ public:
     glm::vec3 getSpecularColor()
     {
         return specularColor;
+    }
+
+    void setCorrectLastUpdateTime() {
+        lastFrameTime = glfwGetTime();
+    }
+    
+    void rotate()
+    {
+        // Measure speed
+        double currentTime = glfwGetTime();
+        float deltaTime = (float)(currentTime - lastFrameTime);
+        lastFrameTime = currentTime;
+        nbFrames++;
+        if ( currentTime - lastTime >= 1.0 ){ // If last prinf() was more than 1sec ago
+            // printf and reset
+            nbFrames = 0;
+            lastTime += 1.0;
+        }
+        gOrientation.y += 3.14159f/2.0f * deltaTime;
+
+        // Build the model matrix
+        glm::mat4 RotationMatrix = glm::eulerAngleYXZ(gOrientation.y, gOrientation.x, gOrientation.z);
+        glm::mat4 ScalingMatrix = glm::scale(glm::mat4(), glm::vec3(1.0f, 1.0f, 1.0f));
+        objectModelMatrix = RotationMatrix * ScalingMatrix;
+    }
+
+    const std::vector<glm::vec3> &getVertices()
+    {
+        return vertices;
+    }
+
+    const std::vector<glm::vec3> &getNormals()
+    {
+        return normals;
+    }
+
+    const GLint getVertexOffset() const
+    {
+        return vertexOffset;
     }
 
 private:
@@ -88,59 +106,11 @@ private:
     glm::mat4x4 objectModelMatrix = glm::mat4(1.0);
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec3> normals;
-    void rotate()
-    {
-        if (isRotated)
-        {
-            // Measure speed
-            double currentTime = glfwGetTime();
-            float deltaTime = (float)(currentTime - lastFrameTime);
-            lastFrameTime = currentTime;
-            nbFrames++;
-            if ( currentTime - lastTime >= 1.0 ){ // If last prinf() was more than 1sec ago
-                // printf and reset
-                nbFrames = 0;
-                lastTime += 1.0;
-            }
-            gOrientation.y += 3.14159f/2.0f * deltaTime;
-
-            // Build the model matrix
-            glm::mat4 RotationMatrix = glm::eulerAngleYXZ(gOrientation.y, gOrientation.x, gOrientation.z);
-            glm::mat4 ScalingMatrix = glm::scale(glm::mat4(), glm::vec3(1.0f, 1.0f, 1.0f));
-            objectModelMatrix = RotationMatrix * ScalingMatrix;
-        }
-    }
 };
 
 class Scene {
 public:
-    explicit Scene(const char * path, ToonShadowsPassHandler * toonShadowsPassHandler);
-
-    void drawScene(utils::Mode mode);
-
-    void drawShadows(Light* light) {
-        glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-        glVertexAttribPointer(
-                0,  // The attribute we want to configure
-                3,                  // size
-                GL_FLOAT,           // type
-                GL_FALSE,           // normalized?
-                0,                  // stride
-                (void*)0            // array buffer offset
-        );
-
-        for (auto object : objects)
-        {
-            glm::mat4 Model = object->getModelMat();
-            glm::mat4 depthProj = light->getProjection();
-            glm::mat4 depthView = light->getView();
-            glm::mat4 depthMVP = depthProj * depthView * Model;
-            glUniformMatrix4fv(light->getMatrixID(), 1, GL_FALSE, &depthMVP[0][0]);
-            object->drawStatic();
-        }
-        glDisableVertexAttribArray(0);
-    }
+    explicit Scene(const char * path);
 
     ~Scene()
     {
@@ -148,26 +118,24 @@ public:
         {
             delete object;
         }
-        glDeleteVertexArrays(1, &VertexArrayID);
-        glDeleteBuffers(1, &vertexbuffer);
-        glDeleteBuffers(1, &normalbuffer);
     }
 
-    GLuint getVertexbuffer()
+    const std::vector<Object*> getObjects() const
     {
-        return vertexbuffer;
+        return objects;
     }
 
-    GLuint getNormalbuffer()
+    const std::vector<glm::vec3> getVertices() const
     {
-        return normalbuffer;
+        return vertices;
+    }
+
+    const std::vector<glm::vec3> getNormals() const
+    {
+        return normals;
     }
 
 private:
-    ToonShadowsPassHandler * toonShadowsPassHandler;
-    GLuint VertexArrayID;
-    GLuint normalbuffer;
-    GLuint vertexbuffer;
     const aiScene* scene;
     std::vector<Object*> objects;
     std::vector<glm::vec3> vertices;

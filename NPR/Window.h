@@ -52,7 +52,7 @@ public:
     }
 
     // camera
-    Camera * camera = new Camera(glm::vec3(0.0f, 0.0f, 5.0f));
+    Camera * camera = new Camera(glm::vec3(0.0f, 0.0f, 8.0f));
     float lastX;
     float lastY;
     bool firstMouse = true;

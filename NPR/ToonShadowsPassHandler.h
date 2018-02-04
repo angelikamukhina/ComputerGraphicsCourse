@@ -13,7 +13,7 @@ public:
     {
         glDeleteProgram(programID);
     }
-    void initializeShader(std::vector<Light*> const & lights);
+    void initializeShader(Light *light);
     void use() {
         glUseProgram(programID);
     }
